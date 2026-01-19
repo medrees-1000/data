@@ -19,10 +19,10 @@ def main():
     pdf_files = list(RESUME_DIR.glob("*.pdf"))
     
     if not pdf_files:
-        print(f"⚠️  No PDFs found in {RESUME_DIR}. Please add your 20 resumes there first!")
+        print(f"No PDFs found in {RESUME_DIR}. Please add your 20 resumes there first!")
         return
     
-    print(f" Starting ingestion of {len(pdf_files)} resumes...")
+    print(f"Starting ingestion of {len(pdf_files)} resumes...")
     
     records = []
     failed_files = []
@@ -46,8 +46,8 @@ def main():
     
     # Print summary
     print("\n" + "="*60)
-    print(f" Successfully ingested: {len(df)} resumes")
-    print(f" Failed to process: {len(failed_files)} resumes")
+    print(f"Successfully ingested: {len(df)} resumes")
+    print(f"Failed to process: {len(failed_files)} resumes")
     
     if failed_files:
         print(f"\n  Failed files:")
@@ -56,9 +56,9 @@ def main():
     
     if len(df) > 0:
         print(f"\n Statistics:")
-        print(f"   Average text length: {df['text_length'].mean():.0f} characters")
-        print(f"   Min length: {df['text_length'].min()} characters")
-        print(f"   Max length: {df['text_length'].max()} characters")
+        print(f"Average text length: {df['text_length'].mean():.0f} characters")
+        print(f"Min length: {df['text_length'].min()} characters")
+        print(f"Max length: {df['text_length'].max()} characters")
     
     print(f"\n Data saved to: {OUTPUT_FILE}")
     print("="*60)
