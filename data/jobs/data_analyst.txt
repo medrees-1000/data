@@ -1,0 +1,24 @@
+Job Title: Data Analyst
+
+Company Overview:
+We are a data-centric organization committed to informed decision-making across all business units.
+
+Role Overview:
+We seek a Data Analyst to analyze complex datasets, create data visualizations, and support business stakeholders.
+
+Key Responsibilities:
+- Collect, clean, and transform raw data
+- Produce analytical reports and dashboards
+- Perform exploratory data analysis
+- Communicate results to non-technical stakeholders
+- Identify patterns and anomalies in datasets
+
+Required Qualifications:
+- Proficiency in SQL for data extraction
+- Strong skills in Excel or similar tools
+- Experience with data visualization (Tableau, Power BI, or similar)
+- Basic understanding of statistical analysis
+
+Preferred Qualifications:
+- Familiarity with Python or R
+- Experience handling unstructured data

@@ -1,0 +1,24 @@
+Job Title: Cybersecurity Specialist
+
+Company Overview:
+We are dedicated to securing and protecting digital infrastructure and sensitive information.
+
+Role Overview:
+We are looking for a Cybersecurity Specialist to monitor systems, identify threats, and implement security solutions.
+
+Key Responsibilities:
+- Perform security risk assessments
+- Monitor networks for suspicious activity
+- Implement safeguards and incident response procedures
+- Investigate and remediate vulnerabilities
+- Document security policies and procedures
+
+Required Qualifications:
+- Strong understanding of cybersecurity frameworks
+- Experience with security tools and SIEM solutions
+- Knowledge of networking fundamentals
+- Ability to analyze logs and security alerts
+
+Preferred Qualifications:
+- Certifications (CISSP, CEH, etc.)
+- Experience in cloud security

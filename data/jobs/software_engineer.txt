@@ -1,0 +1,24 @@
+Job Title: Software Engineer
+
+Company Overview:
+We are a fast-paced engineering team building scalable and reliable software products used by millions of customers.
+
+Role Overview:
+We are looking for a Software Engineer to design, develop, test, and maintain full-stack applications.
+
+Key Responsibilities:
+- Write clean, maintainable, and testable code
+- Collaborate with product and design teams
+- Implement APIs and backend services
+- Debug and troubleshoot issues in production systems
+- Participate in code reviews and design discussions
+
+Required Qualifications:
+- Strong programming skills in Python, Java, or C++
+- Experience with databases and REST APIs
+- Familiarity with containerization tools (Docker, Kubernetes)
+- Solid understanding of version control systems (e.g., Git)
+
+Preferred Qualifications:
+- Experience with cloud platforms (AWS, Azure, GCP)
+- Familiarity with CI/CD pipelines

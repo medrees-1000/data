@@ -1,0 +1,24 @@
+Job Title: Data Scientist
+
+Company Overview:
+We are a technology-driven team that leverages data to inform strategy across product, marketing, and operations.
+
+Role Overview:
+We are seeking a Data Scientist to analyze large datasets, develop predictive models, and deliver insights that influence business direction.
+
+Key Responsibilities:
+- Analyze structured and unstructured data to extract actionable insights
+- Build and validate machine learning models for classification and regression
+- Conduct feature engineering and data preprocessing
+- Create dashboards and reports to communicate findings
+- Partner with cross-functional teams to deploy models
+
+Required Qualifications:
+- Strong proficiency in Python and SQL
+- Experience with machine learning libraries such as scikit-learn, PyTorch, or TensorFlow
+- Solid understanding of statistics and probability
+- Experience with data visualization tools
+
+Preferred Qualifications:
+- Experience with cloud platforms (AWS, Azure, or GCP)
+- Familiarity with NLP or deep learning techniques

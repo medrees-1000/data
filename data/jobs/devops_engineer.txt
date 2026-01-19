@@ -1,0 +1,24 @@
+Job Title: DevOps Engineer
+
+Company Overview:
+We are focused on building reliable, automated infrastructure to support rapid product delivery.
+
+Role Overview:
+We are seeking a DevOps Engineer to streamline development workflows and support scalable infrastructure.
+
+Key Responsibilities:
+- Implement and manage CI/CD pipelines
+- Configure and maintain cloud infrastructure
+- Automate deployment processes
+- Monitor system performance and availability
+- Collaborate with development teams for release planning
+
+Required Qualifications:
+- Experience with containerization (Docker, Kubernetes)
+- Proficiency with cloud platforms (AWS, Azure, GCP)
+- Knowledge of scripting languages (Bash, Python)
+- Understanding of infrastructure-as-code tools (Terraform, Ansible)
+
+Preferred Qualifications:
+- Experience with monitoring tools (Prometheus, Grafana)
+- Familiarity with security best practices for infrastructure
