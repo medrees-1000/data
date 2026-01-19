@@ -1,37 +1,27 @@
 from pypdf import PdfReader
-from pathlib import Path
-from typing import Optional
 
-def extract_text_from_pdf(pdf_path: Path) -> Optional[str]:
+def extract_text_from_pdf(pdf_file):
     """
-    Extracts and cleans text from a single PDF file.
-    
-    Args:
-        pdf_path: Path to the PDF file
-        
-    Returns:
-        Cleaned text or None if extraction fails
+    Extracts text from an uploaded file object or a file path.
     """
     try:
-        reader = PdfReader(pdf_path)
+        reader = PdfReader(pdf_file)
         pages_text = []
         
         for page in reader.pages:
             text = page.extract_text()
             if text:
-                # Basic cleaning: collapse multiple spaces and newlines
+                # Cleaning: collapse multiple spaces and newlines
                 text = " ".join(text.split())
                 pages_text.append(text)
         
         full_text = "\n".join(pages_text)
         
-        # Return None if text is suspiciously short (likely a scanned PDF)
         if len(full_text.strip()) < 50:
-            print(f"⚠️  {pdf_path.name}: Text too short ({len(full_text)} chars) - might be scanned image")
             return None
             
         return full_text
         
     except Exception as e:
-        print(f"❌ Error reading {pdf_path.name}: {e}")
+        print(f"Error reading file: {e}")
         return None
