@@ -22,7 +22,9 @@ def get_embedding_model():
     """Lazy load the embedding model."""
     global _model
     if _model is None:
-        _model = SentenceTransformer("all-MiniLM-L6-v2")
+        # Using all-mpnet-base-v2: Higher quality embeddings (768 dims vs 384)
+        # Better for resume matching - industry standard for semantic search
+        _model = SentenceTransformer("all-mpnet-base-v2")
     return _model
 
 
