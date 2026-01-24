@@ -92,46 +92,76 @@ def extract_keywords(text: str) -> Dict[str, Set[str]]:
     }
 
 
-def calculate_keyword_match(resume_keywords: Dict, job_keywords: Dict) -> Dict[str, float]:
+def calculate_keyword_match(resume_keywords: Dict, job_keywords: Dict, job_sections: Dict = None) -> Dict[str, float]:
     """
     Calculate keyword overlap between resume and job.
+    Weights required skills more heavily than preferred.
+    
+    Args:
+        resume_keywords: Skills found in resume
+        job_keywords: Skills found in full job description
+        job_sections: Optional dict with "required" and "preferred" text
     
     Returns:
-        dict: {
-            "technical_score": 0-1,
-            "education_score": 0-1,
-            "experience_score": 0-1,
-            "overall_keyword_score": 0-1,
-            "matched_skills": list,
-            "missing_skills": list
-        }
+        dict: Scoring breakdown with matched/missing skills
     """
     resume_skills = resume_keywords.get("technical_skills", set())
     job_skills = job_keywords.get("technical_skills", set())
     
-    # Technical skills match
-    if job_skills:
-        matched_skills = resume_skills.intersection(job_skills)
-        missing_skills = job_skills - resume_skills
-        technical_score = len(matched_skills) / len(job_skills)
+    # If we have separate required/preferred sections, use them
+    if job_sections:
+        required_keywords = extract_keywords(job_sections.get("required_skills", ""))
+        preferred_keywords = extract_keywords(job_sections.get("preferred_skills", ""))
+        
+        required_skills = required_keywords.get("technical_skills", set())
+        preferred_skills = preferred_keywords.get("technical_skills", set())
     else:
-        matched_skills = set()
-        missing_skills = set()
-        technical_score = 0.5  # Neutral if no specific skills listed
+        # Assume 70% are required, 30% are preferred
+        all_job_skills = list(job_skills)
+        split_point = int(len(all_job_skills) * 0.7)
+        required_skills = set(all_job_skills[:split_point])
+        preferred_skills = set(all_job_skills[split_point:])
     
-    # Education match
+    # Calculate matches
+    matched_required = resume_skills.intersection(required_skills)
+    matched_preferred = resume_skills.intersection(preferred_skills)
+    
+    missing_required = required_skills - resume_skills
+    missing_preferred = preferred_skills - resume_skills
+    
+    # Weighted scoring
+    if required_skills:
+        required_score = len(matched_required) / len(required_skills)
+    else:
+        required_score = 0.8  # Neutral if no requirements specified
+    
+    if preferred_skills:
+        preferred_score = len(matched_preferred) / len(preferred_skills)
+    else:
+        preferred_score = 1.0  # Perfect if no preferences specified
+    
+    # Technical score: 80% required, 20% preferred
+    technical_score = (0.80 * required_score) + (0.20 * preferred_score)
+    
+    # Combine all matched skills
+    all_matched = list(matched_required.union(matched_preferred))
+    all_missing = list(missing_required.union(missing_preferred))
+    
+    # Penalty for missing critical required skills
+    if len(missing_required) > 3:
+        technical_score *= 0.85  # 15% penalty for many missing required skills
+    
+    # Education match (unchanged)
     resume_edu = resume_keywords.get("education", set())
     job_edu = job_keywords.get("education", set())
-    
     education_score = 1.0 if (resume_edu and job_edu and resume_edu.intersection(job_edu)) else 0.5
     
-    # Experience level match
+    # Experience level match (unchanged)
     resume_exp = resume_keywords.get("experience_level", set())
     job_exp = job_keywords.get("experience_level", set())
-    
     experience_score = 1.0 if (resume_exp and job_exp and resume_exp.intersection(job_exp)) else 0.7
     
-    # Overall keyword score (weighted average)
+    # Overall keyword score
     overall = (
         0.70 * technical_score +
         0.20 * education_score +
@@ -140,11 +170,15 @@ def calculate_keyword_match(resume_keywords: Dict, job_keywords: Dict) -> Dict[s
     
     return {
         "technical_score": technical_score,
+        "required_skill_score": required_score,
+        "preferred_skill_score": preferred_score,
         "education_score": education_score,
         "experience_score": experience_score,
         "overall_keyword_score": overall,
-        "matched_skills": sorted(list(matched_skills)),
-        "missing_skills": sorted(list(missing_skills))
+        "matched_skills": sorted(all_matched),
+        "missing_skills": sorted(all_missing),
+        "missing_required": sorted(list(missing_required)),
+        "missing_preferred": sorted(list(missing_preferred))
     }
 
 

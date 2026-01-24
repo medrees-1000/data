@@ -54,8 +54,8 @@ def process_uploaded_resume(pdf_file):
                 "error": "Could not extract sufficient text from PDF"
             }
         
-        # Chunk the text
-        chunks = chunk_text(text, chunk_size=400, overlap=50)
+        # Chunk the text (smaller chunks for better granularity)
+        chunks = chunk_text(text, chunk_size=200, overlap=75)
         
         if not chunks:
             return {

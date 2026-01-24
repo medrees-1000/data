@@ -2,8 +2,8 @@ from typing import List
 
 def chunk_text(
     text: str,
-    chunk_size: int = 400,
-    overlap: int = 50
+    chunk_size: int = 200,
+    overlap: int = 75
 ) -> List[str]:
     """
     Splits text into chunks based on word count.

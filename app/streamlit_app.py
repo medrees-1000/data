@@ -18,6 +18,7 @@ load_dotenv()
 
 # Import core functions
 from ingestion.process_resume import process_uploaded_resume, process_job_description
+from ingestion.job_cleaner import extract_requirements_section
 from matching.similarity import calculate_match_score, get_top_matching_chunks
 from matching.keyword_matcher import extract_keywords, calculate_keyword_match, get_improvement_suggestions
 from matching.hybrid_scorer import calculate_hybrid_score, generate_score_explanation
@@ -30,7 +31,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS
+# Custom CSS with FIXED colors
 st.markdown("""
     <style>
     .main-header {
@@ -61,18 +62,40 @@ st.markdown("""
     .low { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; }
     
     .info-box {
-        background: #f0f2f6;
-        padding: 1rem;
+        background: #e3f2fd;
+        padding: 1.2rem;
         border-radius: 10px;
-        border-left: 4px solid #667eea;
+        border-left: 5px solid #2196f3;
         margin: 1rem 0;
+        color: #1a1a1a;
+    }
+    .info-box b {
+        color: #1565c0;
+        font-size: 1.05rem;
     }
     .warning-box {
-        background: #fff3cd;
-        padding: 1rem;
+        background: #fff8e1;
+        padding: 1.2rem;
         border-radius: 10px;
-        border-left: 4px solid #ffc107;
+        border-left: 5px solid #ff9800;
         margin: 1rem 0;
+        color: #1a1a1a;
+    }
+    .warning-box b {
+        color: #e65100;
+        font-size: 1.05rem;
+    }
+    .success-box {
+        background: #e8f5e9;
+        padding: 1.2rem;
+        border-radius: 10px;
+        border-left: 5px solid #4caf50;
+        margin: 1rem 0;
+        color: #1a1a1a;
+    }
+    .success-box b {
+        color: #2e7d32;
+        font-size: 1.05rem;
     }
     .stButton>button {
         width: 100%;
@@ -87,12 +110,17 @@ st.markdown("""
     .stButton>button:hover {
         background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     }
-    .metric-card {
-        background: white;
-        padding: 1rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    
+    /* Speedometer gauge */
+    .gauge-container {
         text-align: center;
+        margin: 2rem 0;
+    }
+    .gauge {
+        width: 300px;
+        height: 150px;
+        margin: 0 auto;
+        position: relative;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -111,8 +139,7 @@ with st.sidebar:
     - Text-based (not scanned)
     
     **2. Paste Job Description**
-    - Include requirements only
-    - Skip company info
+    - Paste everything - we clean it!
     
     **3. Get Analysis**
     - Match score breakdown
@@ -125,8 +152,8 @@ with st.sidebar:
     st.header("🎯 Scoring Method")
     st.markdown("""
     **Hybrid Score Breakdown:**
-    - 35% Keyword matching
-    - 35% Semantic similarity
+    - 40% Keyword matching
+    - 30% Semantic similarity
     - 20% Experience match
     - 10% Education match
     """)
@@ -149,41 +176,57 @@ with col1:
     
     st.markdown("""
     <div class="info-box">
-    <b>✅ Requirements:</b><br>
-    • PDF format only<br>
-    • Text-based (not scanned image)<br>
-    • Standard resume format<br>
-    • Under 5MB
+    <b>✅ What Works Best:</b><br><br>
+    • <b>PDF format only</b> (no Word docs)<br>
+    • <b>Text-based PDF</b> - you can select/copy text<br>
+    • <b>Standard layouts</b> - traditional resume format<br>
+    • <b>Under 5MB</b> file size
     </div>
     """, unsafe_allow_html=True)
     
     st.markdown("""
     <div class="warning-box">
-    <b>⚠️ Common Issues:</b><br>
-    • Scanned PDFs won't work<br>
-    • Highly graphic resumes may fail<br>
-    • Use text-selectable PDFs
+    <b>⚠️ Won't Work:</b><br><br>
+    • <b>Scanned images</b> saved as PDF<br>
+    • <b>Highly graphic/creative</b> resumes<br>
+    • <b>Password-protected</b> files
     </div>
     """, unsafe_allow_html=True)
     
     uploaded_file = st.file_uploader(
-        "Choose PDF file",
+        "Choose your resume PDF",
         type=["pdf"],
-        help="Upload candidate resume for analysis"
+        help="Upload a text-based PDF resume"
     )
     
     if uploaded_file:
-        st.success(f"✅ Uploaded: {uploaded_file.name}")
+        st.markdown(f"""
+        <div class="success-box">
+        <b>✅ File Uploaded!</b><br>
+        {uploaded_file.name} ({uploaded_file.size / 1024:.1f} KB)
+        </div>
+        """, unsafe_allow_html=True)
 
 with col2:
     st.subheader("💼 Job Description")
     
     st.markdown("""
     <div class="info-box">
-    <b>💡 Best Results:</b><br>
-    • Paste ONLY job requirements<br>
-    • Include: responsibilities, skills, qualifications<br>
-    • Skip: company info, benefits, salary
+    <b>💡 Pro Tips:</b><br><br>
+    • <b>Paste ENTIRE job post</b> - we'll clean it automatically!<br>
+    • <b>Include everything:</b> company info, requirements, all of it<br>
+    • <b>Don't edit</b> - just copy & paste as-is<br>
+    • <b>More detail = better results!</b>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="success-box">
+    <b>✨ Auto-Cleaning:</b><br><br>
+    Our AI automatically removes:<br>
+    • Company fluff & benefits<br>
+    • Separates Required vs Preferred skills<br>
+    • Focuses on actual qualifications
     </div>
     """, unsafe_allow_html=True)
     
@@ -207,10 +250,11 @@ with col2:
             default_text = job_file.read_text()
     
     job_description = st.text_area(
-        "Paste job description:",
+        "Paste the complete job posting:",
         value=default_text,
-        height=250,
-        placeholder="Paste the job requirements here..."
+        height=280,
+        placeholder="Copy and paste the ENTIRE job description here - we'll handle the rest!",
+        help="Don't worry about cleaning it - our system does that automatically"
     )
 
 # Analysis button
@@ -241,10 +285,13 @@ if st.button("🚀 Analyze Match", type="primary"):
             st.stop()
         
         progress_bar.progress(20)
-        st.caption("Step 2/5: Embedding resume chunks...")
+        st.caption("Step 2/5: Cleaning job description...")
         
-        # Step 2: Process job description
-        job_result = process_job_description(job_description)
+        # Step 2: Clean and process job description
+        job_sections = extract_requirements_section(job_description)
+        cleaned_job_text = job_sections["cleaned_text"]
+        
+        job_result = process_job_description(cleaned_job_text)
         
         if not job_result["success"]:
             st.error(f"❌ Job processing failed: {job_result['error']}")
@@ -265,12 +312,12 @@ if st.button("🚀 Analyze Match", type="primary"):
         semantic_score = sum([c["score"] for c in top_chunks[:3]]) / 3
         
         progress_bar.progress(60)
-        st.caption("Step 4/5: Extracting keywords and matching...")
+        st.caption("Step 4/5: Matching keywords (Required vs Preferred)...")
         
-        # Step 4: Keyword matching
+        # Step 4: Keyword matching with job sections
         resume_keywords = extract_keywords(resume_result["text"])
-        job_keywords = extract_keywords(job_description)
-        keyword_results = calculate_keyword_match(resume_keywords, job_keywords)
+        job_keywords = extract_keywords(cleaned_job_text)
+        keyword_results = calculate_keyword_match(resume_keywords, job_keywords, job_sections)
         
         progress_bar.progress(80)
         st.caption("Step 5/5: Generating hybrid score...")
@@ -291,7 +338,7 @@ if st.button("🚀 Analyze Match", type="primary"):
     # Display Results
     st.success("✅ Analysis Complete!")
     
-    # Overall Score Display
+    # Overall Score Display with Gauge
     st.markdown("---")
     st.subheader("📊 Overall Match Score")
     
@@ -299,20 +346,79 @@ if st.button("🚀 Analyze Match", type="primary"):
     match_icon = score_breakdown["match_icon"]
     match_category = score_breakdown["match_category"]
     
-    # Determine color class
-    if hybrid_score >= 0.75:
+    # Determine color
+    if hybrid_score >= 0.70:
         score_class = "excellent"
-    elif hybrid_score >= 0.60:
+        color = "#667eea"
+    elif hybrid_score >= 0.55:
         score_class = "good"
-    elif hybrid_score >= 0.45:
+        color = "#f093fb"
+    elif hybrid_score >= 0.40:
         score_class = "moderate"
+        color = "#4facfe"
     else:
         score_class = "low"
+        color = "#fa709a"
     
-    st.markdown(
-        f'<div class="match-score-box {score_class}">{match_icon} {hybrid_score:.1%}<br><small>{match_category}</small></div>',
-        unsafe_allow_html=True
+    # Create gauge visualization
+    import plotly.graph_objects as go
+    
+    # Determine gauge color based on score
+    if hybrid_score >= 0.70:
+        gauge_color = "#4caf50"  # Green for excellent
+    elif hybrid_score >= 0.55:
+        gauge_color = "#2196f3"  # Blue for good
+    elif hybrid_score >= 0.40:
+        gauge_color = "#ff9800"  # Orange for moderate
+    else:
+        gauge_color = "#f44336"  # Red for low
+    
+    fig = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = hybrid_score * 100,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {
+            'text': f"<b>{match_icon} {match_category}</b>", 
+            'font': {'size': 28, 'color': '#1a1a1a', 'family': 'Arial'}
+        },
+        number = {
+            'suffix': "%", 
+            'font': {'size': 80, 'color': '#1a1a1a', 'family': 'Arial Bold'}
+        },
+        gauge = {
+            'axis': {
+                'range': [None, 100], 
+                'tickwidth': 2, 
+                'tickcolor': "#666",
+                'tickfont': {'size': 14, 'color': '#1a1a1a'}
+            },
+            'bar': {'color': gauge_color, 'thickness': 0.75},
+            'bgcolor': "#f5f5f5",
+            'borderwidth': 3,
+            'bordercolor': "#e0e0e0",
+            'steps': [
+                {'range': [0, 40], 'color': '#ffebee'},
+                {'range': [40, 55], 'color': '#fff9c4'},
+                {'range': [55, 70], 'color': '#e1f5fe'},
+                {'range': [70, 100], 'color': '#e8f5e9'}
+            ],
+            'threshold': {
+                'line': {'color': gauge_color, 'width': 6},
+                'thickness': 0.8,
+                'value': hybrid_score * 100
+            }
+        }
+    ))
+    
+    fig.update_layout(
+        height=380,
+        margin=dict(l=40, r=40, t=80, b=20),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        font={'color': "#1a1a1a", 'family': "Arial"}
     )
+    
+    st.plotly_chart(fig, use_container_width=True)
     
     st.info(f"**Recommendation:** {score_breakdown['recommendation']}")
     
@@ -350,7 +456,7 @@ if st.button("🚀 Analyze Match", type="primary"):
             help="Education requirements match"
         )
     
-    # Skills Analysis
+    # Skills Analysis with Required vs Preferred
     st.markdown("---")
     st.subheader("🎯 Skills Analysis")
     
@@ -361,26 +467,34 @@ if st.button("🚀 Analyze Match", type="primary"):
         matched_skills = score_breakdown["matched_skills"]
         if matched_skills:
             for skill in matched_skills[:10]:
-                st.markdown(f"- {skill}")
+                st.markdown(f"✓ {skill}")
             if len(matched_skills) > 10:
                 st.caption(f"...and {len(matched_skills) - 10} more")
         else:
-            st.info("No specific technical skills detected in job description")
+            st.info("No specific technical skills detected")
     
     with col2:
         st.markdown("**⚠️ Missing Skills**")
-        missing_skills = score_breakdown["missing_skills"]
-        if missing_skills:
-            for skill in missing_skills[:10]:
-                st.markdown(f"- {skill}")
-            if len(missing_skills) > 10:
-                st.caption(f"...and {len(missing_skills) - 10} more")
-        else:
-            st.success("All required skills found!")
+        
+        missing_required = score_breakdown.get("missing_required", [])
+        missing_preferred = score_breakdown.get("missing_preferred", [])
+        
+        if missing_required:
+            st.markdown("**🔴 Required (High Priority):**")
+            for skill in missing_required[:5]:
+                st.markdown(f"❌ {skill}")
+        
+        if missing_preferred:
+            st.markdown("**🟡 Preferred (Nice to Have):**")
+            for skill in missing_preferred[:3]:
+                st.markdown(f"⚠️ {skill}")
+        
+        if not missing_required and not missing_preferred:
+            st.success("All skills found!")
     
     # Tabs for detailed analysis
     st.markdown("---")
-    tab1, tab2, tab3 = st.tabs(["🤖 AI Explanation", "🔍 Matching Sections", "📋 Full Resume"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🤖 AI Explanation", "🔍 Matching Sections", "📋 Full Resume", "🧹 Job Cleaning"])
     
     with tab1:
         st.subheader("AI-Powered Analysis")
@@ -389,7 +503,7 @@ if st.button("🚀 Analyze Match", type="primary"):
             with st.spinner("Generating AI explanation..."):
                 explanation = generate_match_explanation_groq(
                     [c["chunk"] for c in top_chunks],
-                    job_description,
+                    cleaned_job_text,
                     score_breakdown
                 )
         else:
@@ -419,7 +533,6 @@ if st.button("🚀 Analyze Match", type="primary"):
         for i, chunk in enumerate(top_chunks[:5], 1):
             with st.expander(f"Match #{i} - Relevance: {chunk['score']:.1%}", expanded=(i==1)):
                 st.markdown(f"**Similarity Score:** {chunk['score']:.1%}")
-                st.markdown("**Content:**")
                 st.text_area(
                     f"Section {i}",
                     chunk["chunk"],
@@ -442,8 +555,38 @@ if st.button("🚀 Analyze Match", type="primary"):
         st.caption(f"• Total length: {len(resume_result['text'])} characters")
         st.caption(f"• Number of chunks: {len(resume_result['chunks'])}")
         st.caption(f"• Chunks analyzed: {len(top_chunks)}")
+    
+    with tab4:
+        st.subheader("How We Cleaned the Job Description")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.metric("Original", f"{len(job_description)} chars")
+            st.metric("Cleaned", f"{len(cleaned_job_text)} chars")
+            reduction = ((len(job_description) - len(cleaned_job_text)) / len(job_description)) * 100
+            st.metric("Removed", f"{reduction:.0f}%")
+        
+        with col2:
+            st.markdown("**🎯 Kept:**")
+            st.markdown("- Responsibilities")
+            st.markdown("- Requirements")
+            st.markdown("- Skills")
+            
+            st.markdown("**🗑️ Removed:**")
+            st.markdown("- Company info")
+            st.markdown("- Benefits")
+            st.markdown("- Salary")
+        
+        with st.expander("View Cleaned Job Text"):
+            st.text_area(
+                "Cleaned version:",
+                cleaned_job_text,
+                height=300,
+                label_visibility="collapsed"
+            )
 
 # Footer
 st.markdown("---")
-st.caption("🧠 Powered by all-mpnet-base-v2 embeddings + Groq Llama 3.3 | Hybrid scoring system")
-st.caption("💡 This tool uses semantic AI to understand context, not just keyword matching")
+st.caption("🧠 Powered by all-mpnet-base-v2 embeddings + Groq Llama 3.3 | Weighted Required/Preferred scoring")
+st.caption("💡 Auto-cleans job descriptions • Smaller chunks • Cross-domain compatible")

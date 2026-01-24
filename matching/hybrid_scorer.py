@@ -13,6 +13,7 @@ def calculate_hybrid_score(
 ) -> Dict:
     """
     Combine semantic similarity and keyword matching for final score.
+    Uses boosted semantic scoring for better alignment with human judgment.
     
     Args:
         semantic_score: Cosine similarity score (0-1)
@@ -28,29 +29,39 @@ def calculate_hybrid_score(
     education_score = keyword_match_results.get("education_score", 0.5)
     experience_score = keyword_match_results.get("experience_score", 0.5)
     
+    # Boost semantic score (it's usually too conservative)
+    # If any chunk scored above 0.3, it's likely a relevant match
+    boosted_semantic = min(semantic_score * 1.8, 1.0)  # 80% boost, capped at 100%
+    
     # Weighted hybrid formula
-    # 35% keyword matching (technical skills)
-    # 35% semantic similarity (overall fit)
+    # 40% keyword matching (technical skills) - most important
+    # 30% semantic similarity (overall fit)
     # 20% experience match
     # 10% education match
     
     hybrid_score = (
-        0.35 * technical_score +
-        0.35 * semantic_score +
+        0.40 * technical_score +
+        0.30 * boosted_semantic +
         0.20 * experience_score +
         0.10 * education_score
     )
     
+    # Apply cross-domain boost
+    # If semantic score is decent but keyword score is low,
+    # candidate might be transitioning roles (e.g., SWE → DS)
+    if boosted_semantic > 0.4 and technical_score < 0.5:
+        hybrid_score += 0.05  # 5% boost for potential cross-domain fit
+    
     # Determine match category
-    if hybrid_score >= 0.75:
+    if hybrid_score >= 0.70:
         match_category = "Excellent Match"
         match_icon = "🔥"
         recommendation = "Strong candidate - Recommend immediate interview"
-    elif hybrid_score >= 0.60:
+    elif hybrid_score >= 0.55:
         match_category = "Good Match"
         match_icon = "✅"
         recommendation = "Solid candidate - Review in detail"
-    elif hybrid_score >= 0.45:
+    elif hybrid_score >= 0.40:
         match_category = "Moderate Match"
         match_icon = "⚠️"
         recommendation = "Some gaps exist - Consider with reservations"
@@ -62,14 +73,15 @@ def calculate_hybrid_score(
     # Calculate section scores (for visualization)
     section_scores = {
         "Technical Skills": technical_score,
-        "Overall Fit": semantic_score,
+        "Overall Fit": boosted_semantic,
         "Experience Level": experience_score,
         "Education": education_score
     }
     
     return {
         "hybrid_score": hybrid_score,
-        "semantic_score": semantic_score,
+        "semantic_score": boosted_semantic,
+        "raw_semantic_score": semantic_score,
         "technical_score": technical_score,
         "education_score": education_score,
         "experience_score": experience_score,
@@ -78,7 +90,9 @@ def calculate_hybrid_score(
         "recommendation": recommendation,
         "section_scores": section_scores,
         "matched_skills": keyword_match_results.get("matched_skills", []),
-        "missing_skills": keyword_match_results.get("missing_skills", [])
+        "missing_skills": keyword_match_results.get("missing_skills", []),
+        "missing_required": keyword_match_results.get("missing_required", []),
+        "missing_preferred": keyword_match_results.get("missing_preferred", [])
     }
 
 
